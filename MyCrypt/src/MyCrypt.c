@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 	}
 	bool encrypting = false;
 	bool decrypting = false;
+	bool destroy_orig = false;
 	char path[512];
 	char key[MAX_KEY_SIZE];
 	char output[512];
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 	
 	int c = 0;
 	//load args
-	while ((c = getopt (argc, argv, "edo:f:k:")) != -1)
+	while ((c = getopt (argc, argv, "edo:f:k:x")) != -1)
 	{
 		switch(c)
 		{
@@ -71,6 +72,19 @@ int main(int argc, char *argv[])
 			{
 				decrypting = true;
 			}break;
+			case 'f':
+			{
+				strcpy(path,optarg);
+			}break;
+			case 'x':
+			{
+				destroy_orig = true;
+			}break;
+			case 'o':
+			{
+				strcpy(output,optarg);
+			}
+					
 		}
 	}
 	
@@ -113,6 +127,33 @@ int main(int argc, char *argv[])
 		return 4;
 	}
 	
+	
+	
+	if((strlen(output) == 0) && (encrypting == true))
+	{
+		sprintf(output,"%s_CRYPT",path);
+		printf("%s\n",output);
+	}
+	
+	
+	if((strlen(output) == 0) && (decrypting == true))
+	{
+		char* loc;
+		if((loc = strstr(path,"_CRYPT")) == NULL)
+		{
+			printf("ERROR: -o not defined and file does not have _CRYPT postfix\n");
+			return 3;
+		}
+		else
+		{
+			int i = 0;
+			for(i = 0; i < (loc - path); i++)
+			{
+				output[i] = path[i];
+			}
+		}
+	}
+	
 	if(strlen(key) == 0)
 	{
 		printf("Key: ");
@@ -122,16 +163,13 @@ int main(int argc, char *argv[])
 		free(iput);
 	}
 	
-	if((strlen(output) == 0) && (encrypting))
-	{
-		sprintf(output,"%s_CRYPT",path);
-		printf("%s\n",output);
-	}
-	
-	//encrypt
+	//crypt
 	cryptFile(file,key,output);
 	
-	
+	if(destroy_orig == true)
+	{
+		remove(path);
+	}
 	
 		
 	return 0;
